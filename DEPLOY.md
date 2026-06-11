@@ -273,48 +273,42 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-## 7. HTTPS (optional)
+## 7. HTTPS (strongly recommended, especially if the admin is open to "Any IPv4")
 
-NoIP free-tier hostnames work fine with Let's Encrypt. Run certbot once for the hostname:
+Use **`certonly --standalone`** to get a cert, then re-run `install.sh` — it
+auto-detects the cert and switches to HTTPS-mode nginx configs (port 80 redirects
+to 443, public on 443 ssl, admin on 8443 ssl, one shared cert).
 
-```bash
-sudo certbot --nginx -d gangpiao.ddns.net
-```
-
-Certbot adds `listen 443 ssl` to the **public** nginx block and sets up
-auto-renewal. After it finishes, update `.env`:
-
-```bash
-PUBLIC_SITE_URL=https://gangpiao.ddns.net
-```
-
-Then `sudo systemctl restart hk-rent-public`.
-
-### HTTPS for the admin port
-
-Certbot's `--nginx` plugin only adjusts standard server blocks (`listen 80`).
-The admin runs on `:8443`, so you need one manual edit. Open
-`/etc/nginx/sites-available/hk-rent-admin` and change the `listen` directive:
-
-```nginx
-server {
-    listen 8443 ssl;                       # was: listen 8443;
-    server_name gangpiao.ddns.net;
-
-    ssl_certificate     /etc/letsencrypt/live/gangpiao.ddns.net/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/gangpiao.ddns.net/privkey.pem;
-
-    # ... everything else unchanged ...
-}
-```
-
-Reload:
+> **Why not `certbot --nginx`?** The `--nginx` plugin scans configs for matching
+> `server_name` and edits the first one it finds — in this single-hostname setup
+> it accidentally adds `listen 443 ssl` to the **admin** block, breaking the
+> public site. `certonly --standalone` only issues the cert and lets the
+> templates do the wiring.
 
 ```bash
-sudo nginx -t && sudo systemctl reload nginx
+# 1. Stop nginx briefly so certbot's standalone can use port 80
+sudo systemctl stop nginx
+
+# 2. Issue the cert
+sudo certbot certonly --standalone -d ganghouse.cc -d www.ganghouse.cc
+
+# 3. Start nginx and re-run install.sh (it detects the cert, picks HTTPS templates)
+sudo systemctl start nginx
+sudo bash deploy/install.sh ganghouse.cc
+
+# 4. Update .env and reload Flask services
+sed -i 's|^PUBLIC_SITE_URL=.*|PUBLIC_SITE_URL=https://ganghouse.cc|' .env
+sudo systemctl restart hk-rent-public hk-rent-admin
 ```
 
-Then the admin is at `https://gangpiao.ddns.net:8443/`. Same cert covers both the public site (`:443`) and the admin (`:8443`).
+After this:
+
+- `http://ganghouse.cc/`         → 301 redirect to `https://ganghouse.cc/`
+- `https://ganghouse.cc/`        → public listings (cert valid)
+- `https://ganghouse.cc:8443/`   → admin login (same cert)
+
+Auto-renewal: certbot installs a systemd timer that renews on its own; the renewed
+cert files keep the same paths the nginx configs reference, so nothing else is needed.
 
 ## 8. Locking down the admin
 

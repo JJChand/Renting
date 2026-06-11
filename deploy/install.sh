@@ -3,28 +3,28 @@
 # Install systemd units + nginx server blocks for HK Expats Rent.
 # Replaces the manual copy-paste in DEPLOY.md sections 5 and 6.
 #
-# Single-hostname mode: public on port 80, admin on port 8443.
+# Single-hostname mode: public on port 80 / 443, admin on port 8443.
 # Compatible with free-tier dynamic DNS providers (NoIP, DuckDNS) that only
-# give you one hostname.
+# give you one hostname, AND with paid .com domains.
 #
-# Usage (from anywhere):
-#   sudo bash /opt/hk-expats-rent/deploy/install.sh <hostname>
+# HTTPS auto-detection:
+#   - If /etc/letsencrypt/live/<hostname>/ exists, installs HTTPS-enabled configs
+#     (port 80 redirects to 443, public on 443 ssl, admin on 8443 ssl).
+#   - Otherwise installs plain HTTP configs (port 80 public, port 8443 admin).
 #
-# Example:
-#   sudo bash deploy/install.sh gangpiao.ddns.net
+# Usage:
+#   sudo bash deploy/install.sh <hostname>
 #
-# After this script:
-#   - Both gunicorn services run as systemd daemons (auto-start on boot, auto-restart on crash)
-#   - nginx serves the public site on port 80 and the admin on port 8443
-#   - Both at the SAME hostname — different ports
-#   - You still need to: open port 8443 in Lightsail firewall (see end of script output)
+# Migration recipe for a new HTTPS hostname:
+#   sudo certbot certonly --standalone -d <new-hostname>
+#   sudo bash deploy/install.sh <new-hostname>
 #
 set -euo pipefail
 
 # ---------- args ----------
 if [[ $# -ne 1 ]]; then
     echo "Usage: $0 <hostname>" >&2
-    echo "Example: $0 gangpiao.ddns.net" >&2
+    echo "Example: $0 ganghouse.cc" >&2
     exit 1
 fi
 HOSTNAME_ARG="$1"
@@ -43,6 +43,22 @@ PUBLIC_PORT="8000"        # gunicorn loopback port for public
 ADMIN_PORT="8001"         # gunicorn loopback port for admin
 ADMIN_HTTP_PORT="8443"    # external port nginx exposes admin on
 
+# ---------- detect HTTPS ----------
+CERT_DIR="/etc/letsencrypt/live/$HOSTNAME_ARG"
+if [[ -f "$CERT_DIR/fullchain.pem" && -f "$CERT_DIR/privkey.pem" ]]; then
+    HTTPS_MODE=1
+    PUBLIC_TPL="$SCRIPT_DIR/nginx-public-https.conf.template"
+    ADMIN_TPL="$SCRIPT_DIR/nginx-admin-https.conf.template"
+    PUBLIC_URL="https://$HOSTNAME_ARG/"
+    ADMIN_URL="https://$HOSTNAME_ARG:$ADMIN_HTTP_PORT/"
+else
+    HTTPS_MODE=0
+    PUBLIC_TPL="$SCRIPT_DIR/nginx-public.conf.template"
+    ADMIN_TPL="$SCRIPT_DIR/nginx-admin.conf.template"
+    PUBLIC_URL="http://$HOSTNAME_ARG/"
+    ADMIN_URL="http://$HOSTNAME_ARG:$ADMIN_HTTP_PORT/"
+fi
+
 # ---------- preflight ----------
 echo "▶  Preflight checks"
 [[ -d "$PROJECT_ROOT/.venv" ]]   || { echo "✗ Missing $PROJECT_ROOT/.venv — run 'python3 -m venv .venv && .venv/bin/pip install -r requirements.txt' first"; exit 1; }
@@ -55,8 +71,16 @@ id "$RUN_USER" >/dev/null 2>&1   || { echo "✗ User '$RUN_USER' does not exist"
 echo "    ✓ project at:       $PROJECT_ROOT"
 echo "    ✓ run as user:      $RUN_USER"
 echo "    ✓ hostname:         $HOSTNAME_ARG"
-echo "    ✓ public:           http://$HOSTNAME_ARG/           (nginx :80   → gunicorn :$PUBLIC_PORT)"
-echo "    ✓ admin:            http://$HOSTNAME_ARG:$ADMIN_HTTP_PORT/   (nginx :$ADMIN_HTTP_PORT → gunicorn :$ADMIN_PORT)"
+if [[ $HTTPS_MODE -eq 1 ]]; then
+    echo "    ✓ HTTPS mode:       ENABLED (cert found at $CERT_DIR)"
+else
+    echo "    ⚠ HTTPS mode:       DISABLED (no cert at $CERT_DIR)"
+    echo "                        To enable HTTPS: stop the public service, run"
+    echo "                          sudo certbot certonly --standalone -d $HOSTNAME_ARG"
+    echo "                        then re-run this script."
+fi
+echo "    ✓ public:           $PUBLIC_URL"
+echo "    ✓ admin:            $ADMIN_URL"
 echo
 
 # ---------- confirm ----------
@@ -100,9 +124,9 @@ for svc in hk-rent-public hk-rent-admin; do
 done
 
 # ---------- nginx (DEPLOY.md §6) ----------
-echo "▶  Installing nginx server blocks"
-render "$SCRIPT_DIR/nginx-public.conf.template" /etc/nginx/sites-available/hk-rent-public
-render "$SCRIPT_DIR/nginx-admin.conf.template"  /etc/nginx/sites-available/hk-rent-admin
+echo "▶  Installing nginx server blocks ($([ $HTTPS_MODE -eq 1 ] && echo HTTPS || echo HTTP))"
+render "$PUBLIC_TPL" /etc/nginx/sites-available/hk-rent-public
+render "$ADMIN_TPL"  /etc/nginx/sites-available/hk-rent-admin
 chmod 644 /etc/nginx/sites-available/hk-rent-public /etc/nginx/sites-available/hk-rent-admin
 
 ln -sf /etc/nginx/sites-available/hk-rent-public /etc/nginx/sites-enabled/hk-rent-public
@@ -120,39 +144,49 @@ echo "▶  Smoke testing local endpoints"
 sleep 1
 pub_status=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$PUBLIC_PORT/" || true)
 adm_status=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$ADMIN_PORT/" || true)
-nginx_pub=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOSTNAME_ARG" "http://127.0.0.1/" || true)
-nginx_adm=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOSTNAME_ARG" "http://127.0.0.1:$ADMIN_HTTP_PORT/" || true)
-[[ "$pub_status" == "200" ]] && echo "    ✓ gunicorn public  127.0.0.1:$PUBLIC_PORT/ → 200"           || echo "    ⚠ gunicorn public  → $pub_status (expected 200)"
-[[ "$adm_status" == "302" ]] && echo "    ✓ gunicorn admin   127.0.0.1:$ADMIN_PORT/ → 302"            || echo "    ⚠ gunicorn admin   → $adm_status (expected 302)"
-[[ "$nginx_pub" == "200" ]]  && echo "    ✓ nginx → public   :80   → 200"                              || echo "    ⚠ nginx public     → $nginx_pub (expected 200)"
-[[ "$nginx_adm" == "302" ]]  && echo "    ✓ nginx → admin    :$ADMIN_HTTP_PORT → 302 (redirects to /login)" || echo "    ⚠ nginx admin      → $nginx_adm (expected 302)"
+[[ "$pub_status" == "200" ]] && echo "    ✓ gunicorn public  127.0.0.1:$PUBLIC_PORT/ → 200" || echo "    ⚠ gunicorn public  → $pub_status (expected 200)"
+[[ "$adm_status" == "302" ]] && echo "    ✓ gunicorn admin   127.0.0.1:$ADMIN_PORT/ → 302" || echo "    ⚠ gunicorn admin   → $adm_status (expected 302)"
+
+if [[ $HTTPS_MODE -eq 1 ]]; then
+    # In HTTPS mode, nginx on port 80 redirects → port 443 serves the public site
+    nginx_redirect=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOSTNAME_ARG" "http://127.0.0.1/" || true)
+    nginx_pub=$(curl -sk -o /dev/null -w "%{http_code}" "https://$HOSTNAME_ARG/" || true)
+    nginx_adm=$(curl -sk -o /dev/null -w "%{http_code}" "https://$HOSTNAME_ARG:$ADMIN_HTTP_PORT/" || true)
+    [[ "$nginx_redirect" == "301" ]] && echo "    ✓ nginx → :80 redirect → 301 (to https)"            || echo "    ⚠ nginx redirect    → $nginx_redirect (expected 301)"
+    [[ "$nginx_pub" == "200" ]]      && echo "    ✓ nginx → public  :443  → 200"                       || echo "    ⚠ nginx public      → $nginx_pub (expected 200)"
+    [[ "$nginx_adm" == "302" ]]      && echo "    ✓ nginx → admin   :$ADMIN_HTTP_PORT → 302"           || echo "    ⚠ nginx admin       → $nginx_adm (expected 302)"
+else
+    nginx_pub=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOSTNAME_ARG" "http://127.0.0.1/" || true)
+    nginx_adm=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOSTNAME_ARG" "http://127.0.0.1:$ADMIN_HTTP_PORT/" || true)
+    [[ "$nginx_pub" == "200" ]] && echo "    ✓ nginx → public  :80   → 200" || echo "    ⚠ nginx public → $nginx_pub (expected 200)"
+    [[ "$nginx_adm" == "302" ]] && echo "    ✓ nginx → admin   :$ADMIN_HTTP_PORT → 302" || echo "    ⚠ nginx admin  → $nginx_adm (expected 302)"
+fi
 
 cat <<EOF
 
 ✅  Install complete.
 
-Public URL:  http://$HOSTNAME_ARG/
-Admin URL:   http://$HOSTNAME_ARG:$ADMIN_HTTP_PORT/
+Public URL:  $PUBLIC_URL
+Admin URL:   $ADMIN_URL
 
 Next steps:
-  1. Point your NoIP / DuckDNS hostname at this Lightsail instance's static IP
-     (you only need ONE hostname — admin reuses the same one on a different port).
+  1. Lightsail firewall: open port 443 (Any IPv4) for HTTPS public site,
+     and port $ADMIN_HTTP_PORT (Any IPv4) for HTTPS admin site.
+     You can delete any temporary 8000 / 8001 rules.
 
-  2. Open port $ADMIN_HTTP_PORT in the Lightsail firewall:
-        Application: Custom
-        Protocol:    TCP
-        Port:        $ADMIN_HTTP_PORT
-        Source:      Your laptop's IP only (run \`curl ifconfig.me\` on your Mac)
-     You can also CLOSE the temporary 8000 / 8001 rules now — nginx is the front door.
+  2. Update .env to match:
+EOF
+if [[ $HTTPS_MODE -eq 1 ]]; then
+    echo "        PUBLIC_SITE_URL=https://$HOSTNAME_ARG"
+else
+    echo "        PUBLIC_SITE_URL=http://$HOSTNAME_ARG"
+fi
+cat <<EOF
+     Then: sudo systemctl restart hk-rent-public
 
-  3. Update .env to use the hostname (no port for public, since nginx is on :80):
-        PUBLIC_SITE_URL=http://$HOSTNAME_ARG
-     Then restart the public service:
-        sudo systemctl restart hk-rent-public
+  3. Verify from your laptop browser:
+        $PUBLIC_URL → public listings
+        $ADMIN_URL → admin login
 
-  4. Verify from your laptop browser:
-        http://$HOSTNAME_ARG/                  → public listings
-        http://$HOSTNAME_ARG:$ADMIN_HTTP_PORT/ → admin login
-
-This script is idempotent — safe to re-run after a code update or config change.
+This script is idempotent — safe to re-run after a code update or hostname change.
 EOF
