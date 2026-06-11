@@ -93,6 +93,29 @@ Initialize the database:
 .venv/bin/python seed.py
 ```
 
+## 5–6. Automated install (recommended)
+
+Sections 5 and 6 below show the manual steps for systemd + nginx. To run them in
+one shot, use the bundled script:
+
+```bash
+sudo bash deploy/install.sh your-domain.com admin.your-domain.com
+```
+
+It:
+- Substitutes your domains and `$PROJECT_ROOT` into the templates in `deploy/*.template`
+- Writes the two systemd unit files and `daemon-reload + enable --now`s them
+- Writes the two nginx server blocks, symlinks them into `sites-enabled/`, removes the default
+- Runs `nginx -t` and reloads nginx
+- Smoke-tests both gunicorn processes on their loopback ports
+
+After it finishes, **skip to section 7 (DNS + HTTPS)**. The script is idempotent —
+safe to re-run after code changes.
+
+If you want to see what it does or do it by hand, the manual steps follow.
+
+---
+
 ## 5. Two systemd services (one per process)
 
 ### 5a. Public service
