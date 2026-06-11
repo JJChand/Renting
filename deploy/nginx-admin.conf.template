@@ -1,11 +1,11 @@
 server {
-    listen 80;
-    server_name {{ADMIN_DOMAIN}};
+    listen {{ADMIN_HTTP_PORT}};
+    server_name {{HOSTNAME}};
 
     client_max_body_size 20M;
 
     # Optional: restrict admin to your own IP. Uncomment and replace.
-    # Find your IP with: curl ifconfig.me
+    # Find your IP with: curl ifconfig.me (run on your laptop, not the server).
     # allow 203.0.113.42;
     # deny  all;
 

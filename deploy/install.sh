@@ -3,27 +3,31 @@
 # Install systemd units + nginx server blocks for HK Expats Rent.
 # Replaces the manual copy-paste in DEPLOY.md sections 5 and 6.
 #
+# Single-hostname mode: public on port 80, admin on port 8443.
+# Compatible with free-tier dynamic DNS providers (NoIP, DuckDNS) that only
+# give you one hostname.
+#
 # Usage (from anywhere):
-#   sudo bash /opt/hk-expats-rent/deploy/install.sh <public-domain> <admin-domain>
+#   sudo bash /opt/hk-expats-rent/deploy/install.sh <hostname>
 #
 # Example:
-#   sudo bash deploy/install.sh gangpiao-anjia.com admin.gangpiao-anjia.com
+#   sudo bash deploy/install.sh gangpiao.ddns.net
 #
 # After this script:
-#   - Both gunicorn services are running on 127.0.0.1:8000 / :8001
-#   - nginx serves them on port 80 for the two domains
-#   - You still need to: point DNS at this host, then run certbot (see DEPLOY.md §7)
+#   - Both gunicorn services run as systemd daemons (auto-start on boot, auto-restart on crash)
+#   - nginx serves the public site on port 80 and the admin on port 8443
+#   - Both at the SAME hostname — different ports
+#   - You still need to: open port 8443 in Lightsail firewall (see end of script output)
 #
 set -euo pipefail
 
 # ---------- args ----------
-if [[ $# -ne 2 ]]; then
-    echo "Usage: $0 <public-domain> <admin-domain>" >&2
-    echo "Example: $0 gangpiao-anjia.com admin.gangpiao-anjia.com" >&2
+if [[ $# -ne 1 ]]; then
+    echo "Usage: $0 <hostname>" >&2
+    echo "Example: $0 gangpiao.ddns.net" >&2
     exit 1
 fi
-PUBLIC_DOMAIN="$1"
-ADMIN_DOMAIN="$2"
+HOSTNAME_ARG="$1"
 
 # ---------- must be root ----------
 if [[ $EUID -ne 0 ]]; then
@@ -34,9 +38,10 @@ fi
 # ---------- resolve paths ----------
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
-RUN_USER="${SUDO_USER:-ubuntu}"           # the non-root user that owns the project
-PUBLIC_PORT="8000"
-ADMIN_PORT="8001"
+RUN_USER="${SUDO_USER:-ubuntu}"
+PUBLIC_PORT="8000"        # gunicorn loopback port for public
+ADMIN_PORT="8001"         # gunicorn loopback port for admin
+ADMIN_HTTP_PORT="8443"    # external port nginx exposes admin on
 
 # ---------- preflight ----------
 echo "▶  Preflight checks"
@@ -49,8 +54,9 @@ id "$RUN_USER" >/dev/null 2>&1   || { echo "✗ User '$RUN_USER' does not exist"
 
 echo "    ✓ project at:       $PROJECT_ROOT"
 echo "    ✓ run as user:      $RUN_USER"
-echo "    ✓ public domain:    $PUBLIC_DOMAIN  (gunicorn on :$PUBLIC_PORT)"
-echo "    ✓ admin domain:     $ADMIN_DOMAIN  (gunicorn on :$ADMIN_PORT)"
+echo "    ✓ hostname:         $HOSTNAME_ARG"
+echo "    ✓ public:           http://$HOSTNAME_ARG/           (nginx :80   → gunicorn :$PUBLIC_PORT)"
+echo "    ✓ admin:            http://$HOSTNAME_ARG:$ADMIN_HTTP_PORT/   (nginx :$ADMIN_HTTP_PORT → gunicorn :$ADMIN_PORT)"
 echo
 
 # ---------- confirm ----------
@@ -62,10 +68,10 @@ render() {
     local src="$1" dst="$2"
     sed -e "s|{{PROJECT_ROOT}}|$PROJECT_ROOT|g" \
         -e "s|{{RUN_USER}}|$RUN_USER|g" \
-        -e "s|{{PUBLIC_DOMAIN}}|$PUBLIC_DOMAIN|g" \
-        -e "s|{{ADMIN_DOMAIN}}|$ADMIN_DOMAIN|g" \
+        -e "s|{{HOSTNAME}}|$HOSTNAME_ARG|g" \
         -e "s|{{PUBLIC_PORT}}|$PUBLIC_PORT|g" \
         -e "s|{{ADMIN_PORT}}|$ADMIN_PORT|g" \
+        -e "s|{{ADMIN_HTTP_PORT}}|$ADMIN_HTTP_PORT|g" \
         "$src" > "$dst"
 }
 
@@ -83,7 +89,6 @@ chmod 644 /etc/systemd/system/hk-rent-public.service /etc/systemd/system/hk-rent
 systemctl daemon-reload
 systemctl enable --now hk-rent-public hk-rent-admin
 
-# Give them a moment, then check status
 sleep 2
 for svc in hk-rent-public hk-rent-admin; do
     if systemctl is-active --quiet "$svc"; then
@@ -115,22 +120,39 @@ echo "▶  Smoke testing local endpoints"
 sleep 1
 pub_status=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$PUBLIC_PORT/" || true)
 adm_status=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:$ADMIN_PORT/" || true)
-[[ "$pub_status" == "200" ]] && echo "    ✓ public  127.0.0.1:$PUBLIC_PORT/ → 200" || echo "    ⚠ public  127.0.0.1:$PUBLIC_PORT/ → $pub_status (expected 200)"
-[[ "$adm_status" == "302" ]] && echo "    ✓ admin   127.0.0.1:$ADMIN_PORT/ → 302 (redirects to /login)" || echo "    ⚠ admin   127.0.0.1:$ADMIN_PORT/ → $adm_status (expected 302)"
+nginx_pub=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOSTNAME_ARG" "http://127.0.0.1/" || true)
+nginx_adm=$(curl -s -o /dev/null -w "%{http_code}" -H "Host: $HOSTNAME_ARG" "http://127.0.0.1:$ADMIN_HTTP_PORT/" || true)
+[[ "$pub_status" == "200" ]] && echo "    ✓ gunicorn public  127.0.0.1:$PUBLIC_PORT/ → 200"           || echo "    ⚠ gunicorn public  → $pub_status (expected 200)"
+[[ "$adm_status" == "302" ]] && echo "    ✓ gunicorn admin   127.0.0.1:$ADMIN_PORT/ → 302"            || echo "    ⚠ gunicorn admin   → $adm_status (expected 302)"
+[[ "$nginx_pub" == "200" ]]  && echo "    ✓ nginx → public   :80   → 200"                              || echo "    ⚠ nginx public     → $nginx_pub (expected 200)"
+[[ "$nginx_adm" == "302" ]]  && echo "    ✓ nginx → admin    :$ADMIN_HTTP_PORT → 302 (redirects to /login)" || echo "    ⚠ nginx admin      → $nginx_adm (expected 302)"
 
 cat <<EOF
 
 ✅  Install complete.
 
-Next steps (DEPLOY.md §7):
-  1. Point DNS A records at this host:
-        $PUBLIC_DOMAIN          → <this-host-public-ip>
-        www.$PUBLIC_DOMAIN      → <this-host-public-ip>
-        $ADMIN_DOMAIN           → <this-host-public-ip>
-  2. Wait for DNS to propagate (check with: dig $ADMIN_DOMAIN)
-  3. Run certbot to issue HTTPS certs:
-        sudo certbot --nginx -d $PUBLIC_DOMAIN -d www.$PUBLIC_DOMAIN -d $ADMIN_DOMAIN
+Public URL:  http://$HOSTNAME_ARG/
+Admin URL:   http://$HOSTNAME_ARG:$ADMIN_HTTP_PORT/
 
-To rerun this script later (e.g. after a code update), the existing services and
-configs will simply be overwritten — it is safe to run again.
+Next steps:
+  1. Point your NoIP / DuckDNS hostname at this Lightsail instance's static IP
+     (you only need ONE hostname — admin reuses the same one on a different port).
+
+  2. Open port $ADMIN_HTTP_PORT in the Lightsail firewall:
+        Application: Custom
+        Protocol:    TCP
+        Port:        $ADMIN_HTTP_PORT
+        Source:      Your laptop's IP only (run \`curl ifconfig.me\` on your Mac)
+     You can also CLOSE the temporary 8000 / 8001 rules now — nginx is the front door.
+
+  3. Update .env to use the hostname (no port for public, since nginx is on :80):
+        PUBLIC_SITE_URL=http://$HOSTNAME_ARG
+     Then restart the public service:
+        sudo systemctl restart hk-rent-public
+
+  4. Verify from your laptop browser:
+        http://$HOSTNAME_ARG/                  → public listings
+        http://$HOSTNAME_ARG:$ADMIN_HTTP_PORT/ → admin login
+
+This script is idempotent — safe to re-run after a code update or config change.
 EOF
