@@ -1,0 +1,141 @@
+{% extends "base_public.html" %}
+
+{% block title %}港漂安家 · 香港长租房源 · 内地学生 / 港漂专属{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+    <div class="hero-content">
+        <h1>找到你在香港的家</h1>
+        <p>专为内地学生与港漂新移民打造的长租平台 — 房东直租、免中介费、近港铁、近大学。</p>
+        <form class="search-bar" action="{{ url_for('public.index') }}" method="get">
+            <input type="text" name="q" value="{{ filters.q }}"
+                   placeholder="搜索地区、港铁站、屋苑或大学（例如「坑口」「港大」「日出康城」）" aria-label="搜索">
+            <button type="submit" class="search-btn">🔍 搜索</button>
+        </form>
+    </div>
+</section>
+
+<div class="filters-wrap">
+    <form class="filters" action="{{ url_for('public.index') }}" method="get">
+        {% if filters.q %}<input type="hidden" name="q" value="{{ filters.q }}">{% endif %}
+
+        <div class="filter-group">
+            <label for="f-region">区域</label>
+            <select id="f-region" name="region">
+                <option value="all" {% if filters.region == 'all' %}selected{% endif %}>全部区域</option>
+                {% for r in regions %}
+                <option value="{{ r }}" {% if filters.region == r %}selected{% endif %}>{{ r }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="f-price">租金范围</label>
+            <select id="f-price" name="price">
+                {% for value, label in price_buckets %}
+                <option value="{{ value }}" {% if filters.price == value %}selected{% endif %}>HK$ {{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="f-room">房型</label>
+            <select id="f-room" name="room_type">
+                <option value="all" {% if filters.room_type == 'all' %}selected{% endif %}>不限房型</option>
+                {% for t in room_types %}
+                <option value="{{ t }}" {% if filters.room_type == t %}selected{% endif %}>{{ t }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="f-univ">附近大学</label>
+            <select id="f-univ" name="university">
+                <option value="all" {% if filters.university == 'all' %}selected{% endif %}>不限</option>
+                {% for u in universities %}
+                <option value="{{ u }}" {% if filters.university == u %}selected{% endif %}>{{ u }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button class="filter-apply" type="submit">应用筛选</button>
+        <a class="filter-reset" href="{{ url_for('public.index') }}">重置</a>
+    </form>
+</div>
+
+<div class="ticker" aria-label="最新房源动态">
+    <div class="ticker-bar">
+        <div class="ticker-label">最新动态 LIVE</div>
+        <div class="ticker-viewport">
+            <div class="ticker-track">
+                {% set ticker_items = [
+                    '🔥 最新上架：红磡海韵轩单间，<span class="price">HK$ 5,500/月</span>',
+                    '⚡ 刚刚租出：大围名城两室一厅，<strong>3天速租</strong>',
+                    '🏡 降价急租：港大西宝城旁独立卫浴，<span class="price">HK$ 7,800/月</span>',
+                    '🎓 学生专享：中大新亚书院附近合租，<span class="price">HK$ 4,200/月起</span>',
+                    '✨ 全新装修：日出康城首都海景两房，<span class="price">HK$ 14,500/月</span>',
+                    '🚇 港铁直达：坚尼地城地铁A出口3分钟，<strong>步行至HKU</strong>',
+                    '💎 业主直租：油麻地开放式studio，<strong>免中介费</strong>',
+                    '🌊 海景房源：将军澳日出康城，<span class="price">HK$ 12,000/月</span>',
+                    '🎁 限时优惠：旺角朗豪坊旁全新studio首月半价',
+                    '📚 科大快线：坑口港铁站套房，<strong>校巴15分钟直达HKUST</strong>'
+                ] %}
+                {# Items rendered twice so the @keyframes can translateX -50% for a seamless loop #}
+                {% for _ in [1, 2] %}
+                    {% for item in ticker_items %}
+                    <span class="ticker-item">{{ item|safe }}</span>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<main class="listings" id="listings">
+    <div class="section-head">
+        <h2>
+            精选房源
+            <small>共 {{ houses|length }} 套在租房源 · 房东实名核实</small>
+        </h2>
+    </div>
+
+    {% if houses %}
+    <section class="grid" aria-label="房源列表">
+        {% for house in houses %}
+        <a class="card" href="{{ url_for('public.house_detail', house_id=house.id) }}">
+            <div class="card-image">
+                {% if loop.index <= 2 %}<span class="badge">热门</span>{% endif %}
+                <img src="{{ house.cover_image }}" alt="{{ house.title }}" loading="lazy">
+            </div>
+            <div class="card-body">
+                <div class="card-price">HK$ {{ '{:,}'.format(house.price_hkd) }} <small>/ 月</small></div>
+                <h3 class="card-title">{{ house.title }}</h3>
+                <div class="card-meta">
+                    {{ house.district }}
+                    {%- if house.mtr_station %} · 港铁 {{ house.mtr_station }} 站{% endif %}
+                    {%- if house.near_university and house.near_university != '无' %} · 近 {{ house.near_university }}{% endif %}
+                </div>
+                <div class="card-tags">
+                    {% for tag in house.tags[:3] %}
+                        {% set tone = 'tag-green' if tag in ['无中介费', '一价全包', '包水电网煤', '独立卫浴']
+                                     else 'tag-orange' if '大' in tag or '学生' in tag or '校巴' in tag
+                                     else 'tag-purple' if tag in ['全新装修', '海景房', '景观房', '会所设施']
+                                     else '' %}
+                        <span class="tag {{ tone }}">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </section>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">🔍</div>
+        <h3>没有找到符合条件的房源</h3>
+        <p>试试放宽筛选条件，或者 <a href="{{ url_for('public.index') }}" style="color: var(--primary);">查看全部房源</a></p>
+    </div>
+    {% endif %}
+</main>
+
+{% endblock %}

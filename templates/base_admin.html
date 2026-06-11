@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>{% block title %}管理后台 · 港漂安家{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body style="background: var(--bg, #f5f7fa);">
+
+<header class="admin-header">
+    <div class="admin-header-inner">
+        <a href="{{ url_for('admin.dashboard') }}" class="admin-logo">
+            <span class="admin-badge">管理后台</span>
+            港漂安家
+        </a>
+        {% if current_user.is_authenticated %}
+        <nav class="admin-nav">
+            <a href="{{ url_for('admin.dashboard') }}" {% if request.endpoint == 'admin.dashboard' %}class="active"{% endif %}>房源管理</a>
+            <a href="{{ url_for('admin.new_house') }}" {% if request.endpoint == 'admin.new_house' %}class="active"{% endif %}>+ 新房源</a>
+            <a href="{{ public_site_url }}" target="_blank" rel="noopener">查看公开站 ↗</a>
+            <span class="admin-user">👤 {{ current_user.display_name }}</span>
+            <form method="post" action="{{ url_for('auth.logout') }}" style="display:inline;">
+                <button type="submit" class="btn btn-ghost" style="padding:6px 12px;">退出</button>
+            </form>
+        </nav>
+        {% endif %}
+    </div>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-wrap" style="max-width:1280px;margin:16px auto 0;padding:0 24px;">
+        {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

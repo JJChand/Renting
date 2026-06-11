@@ -1,0 +1,100 @@
+{% extends "base_public.html" %}
+
+{% block title %}{{ house.title }} · 港漂安家{% endblock %}
+{% block description %}{{ house.title }} - HK${{ '{:,}'.format(house.price_hkd) }}/月。{{ house.transport_info or '' }}{% endblock %}
+
+{% block content %}
+<main class="detail">
+
+    <div class="detail-breadcrumb">
+        <a href="{{ url_for('public.index') }}">首页</a> ›
+        <a href="{{ url_for('public.index', region=house.region) }}">{{ house.region }}</a> ›
+        {{ house.district }} · {{ house.title }}
+    </div>
+
+    {% if house.images %}
+    <div class="gallery">
+        {% if house.images|length == 1 %}
+            <img class="single" src="{{ house.images[0].url }}" alt="{{ house.title }}">
+        {% else %}
+            <img class="main-img" src="{{ house.images[0].url }}" alt="{{ house.title }}">
+            {% for img in house.images[1:5] %}
+                <img class="thumb" src="{{ img.url }}" alt="{{ house.title }} 图 {{ loop.index + 1 }}">
+            {% endfor %}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="detail-body">
+
+        <div class="detail-main">
+            <h1>{{ house.title }}</h1>
+
+            <div class="detail-meta-row">
+                <span>📍 {{ house.region }} · {{ house.district }}{% if house.address_detail %} · {{ house.address_detail }}{% endif %}</span>
+                {% if house.mtr_station %}<span>🚇 港铁 {{ house.mtr_station }} 站</span>{% endif %}
+                {% if house.near_university and house.near_university != '无' %}
+                    <span>🎓 近 {{ house.near_university }}</span>
+                {% endif %}
+                {% if house.area_sqft %}<span>📐 约 {{ house.area_sqft }} 呎</span>{% endif %}
+            </div>
+
+            {% if house.tags %}
+            <div class="detail-tags">
+                {% for tag in house.tags %}
+                    {% set tone = 'tag-green' if tag in ['无中介费', '一价全包', '包水电网煤', '独立卫浴']
+                                 else 'tag-orange' if '大' in tag or '学生' in tag or '校巴' in tag
+                                 else 'tag-purple' if tag in ['全新装修', '海景房', '景观房', '会所设施']
+                                 else '' %}
+                    <span class="tag {{ tone }}">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <dl class="spec-grid">
+                <div><dt>房型</dt><dd>{{ house.room_type }}</dd></div>
+                <div><dt>月租</dt><dd>HK$ {{ '{:,}'.format(house.price_hkd) }}</dd></div>
+                <div><dt>押金</dt><dd>{{ house.deposit_months }} 个月</dd></div>
+                <div><dt>最短租期</dt><dd>{{ house.min_lease_months }} 个月</dd></div>
+                <div><dt>中介费</dt><dd>{{ house.agency_fee }}</dd></div>
+                <div><dt>包水电网煤</dt><dd>{{ '是' if house.bills_included else '否' }}</dd></div>
+                {% if house.transport_info %}
+                <div style="grid-column: 1 / -1;">
+                    <dt>交通</dt><dd style="font-weight: 500;">{{ house.transport_info }}</dd>
+                </div>
+                {% endif %}
+            </dl>
+
+            <div class="detail-description">{{ house.description }}</div>
+        </div>
+
+        <aside class="contact-card">
+            <div class="big-price">HK$ {{ '{:,}'.format(house.price_hkd) }} <small>/ 月</small></div>
+            <div class="price-note">{{ house.agency_fee }} · 押 {{ house.deposit_months }} 个月 · 最短 {{ house.min_lease_months }} 个月</div>
+
+            {% if house.contact_wechat %}
+            <button class="contact-btn wechat" type="button" onclick="
+                navigator.clipboard.writeText('{{ house.contact_wechat }}').then(() => this.innerText = '✓ 微信号已复制：{{ house.contact_wechat }}')
+            ">
+                <span>💬</span> 复制微信号：{{ house.contact_wechat }}
+            </button>
+            {% endif %}
+
+            {% if house.contact_whatsapp %}
+            {% set wa_number = house.contact_whatsapp|replace('+', '')|replace(' ', '')|replace('-', '') %}
+            {% set wa_text = '你好，我在港漂安家看到「' + house.title + '」，请问还可以租吗？' %}
+            <a class="contact-btn whatsapp" href="https://wa.me/{{ wa_number }}?text={{ wa_text|urlencode }}" target="_blank" rel="noopener">
+                <span>📱</span> WhatsApp 联系房东
+            </a>
+            {% endif %}
+
+            <div class="contact-divider">— 房东直租，无中介 —</div>
+
+            <div class="disclaimer">
+                ⚠️ 看房前请先确认房源真实性。签约时务必本人到场，付款前查验房东身份及业权证明，切勿直接转账给陌生账户。
+            </div>
+        </aside>
+
+    </div>
+</main>
+{% endblock %}

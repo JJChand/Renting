@@ -1,0 +1,24 @@
+{% extends "base_admin.html" %}
+
+{% block title %}后台登录 · 港漂安家{% endblock %}
+
+{% block content %}
+<div class="login-wrap">
+    <div class="login-card">
+        <h1>后台登录</h1>
+        <p>请使用管理员账号登录，发布或管理房源</p>
+
+        <form method="post" action="{{ url_for('auth.login') }}">
+            <div class="field">
+                <label for="username">用户名</label>
+                <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+            </div>
+            <div class="field">
+                <label for="password">密码</label>
+                <input id="password" name="password" type="password" autocomplete="current-password" required>
+            </div>
+            <button class="btn btn-primary btn-block" type="submit">登录</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

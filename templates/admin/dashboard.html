@@ -1,0 +1,90 @@
+{% extends "base_admin.html" %}
+
+{% block title %}房源管理 · 港漂安家后台{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    <h1>房源管理</h1>
+
+    <div class="admin-actions">
+        <a class="btn btn-primary" href="{{ url_for('admin.new_house') }}">+ 发布新房源</a>
+        <a class="btn btn-ghost" href="{{ public_site_url }}/" target="_blank" rel="noopener">查看公开站 ↗</a>
+    </div>
+
+    <div class="table-card">
+        {% if houses %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width:80px;">封面</th>
+                    <th>房源</th>
+                    <th style="width:140px;">月租</th>
+                    <th style="width:120px;">状态</th>
+                    <th style="width:140px;">更新时间</th>
+                    <th style="width:260px;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in houses %}
+                <tr>
+                    <td>
+                        <img class="thumb-tiny"
+                             src="{{ h.cover or 'https://picsum.photos/seed/empty/120/90' }}"
+                             alt="">
+                    </td>
+                    <td>
+                        <div class="title-cell">{{ h.title }}</div>
+                        <div class="title-cell-sub">
+                            {{ h.region }} · {{ h.district }} · {{ h.room_type }}
+                            {% if h.near_university and h.near_university != '无' %} · 近 {{ h.near_university }}{% endif %}
+                        </div>
+                    </td>
+                    <td><strong style="color: var(--primary);">HK$ {{ '{:,}'.format(h.price_hkd) }}</strong></td>
+                    <td>
+                        {% if h.status == '在租' %}
+                            <span class="status-pill live">{{ h.status }}</span>
+                        {% elif h.status == '已租出' %}
+                            <span class="status-pill rented">{{ h.status }}</span>
+                        {% else %}
+                            <span class="status-pill hidden">{{ h.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="color: var(--text-light); font-size: 13px;">
+                        {{ h.updated_at[:10] if h.updated_at else '' }}
+                    </td>
+                    <td class="row-actions">
+                        <a href="{{ public_site_url }}/house/{{ h.id }}" target="_blank" rel="noopener">查看 ↗</a>
+                        <a href="{{ url_for('admin.edit_house', house_id=h.id) }}">编辑</a>
+
+                        {% if h.status == '在租' %}
+                        <form method="post" action="{{ url_for('admin.update_status', house_id=h.id) }}" style="display:inline;">
+                            <input type="hidden" name="status" value="已租出">
+                            <button type="submit">标记已租</button>
+                        </form>
+                        {% else %}
+                        <form method="post" action="{{ url_for('admin.update_status', house_id=h.id) }}" style="display:inline;">
+                            <input type="hidden" name="status" value="在租">
+                            <button type="submit">重新上架</button>
+                        </form>
+                        {% endif %}
+
+                        <form method="post" action="{{ url_for('admin.delete_house', house_id=h.id) }}"
+                              style="display:inline;"
+                              onsubmit="return confirm('确定要删除「{{ h.title }}」吗？此操作无法撤销。');">
+                            <button type="submit" class="delete">删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-table">
+            <div style="font-size:36px; margin-bottom:8px;">🏠</div>
+            <p style="margin-bottom:12px;">还没有任何房源</p>
+            <a class="btn btn-primary" href="{{ url_for('admin.new_house') }}">立即发布第一套</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

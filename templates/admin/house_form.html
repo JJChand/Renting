@@ -1,0 +1,291 @@
+{% extends "base_admin.html" %}
+
+{% block title %}{{ '发布新房源' if mode == 'new' else '编辑房源' }} · 后台{% endblock %}
+
+{% block content %}
+<div class="admin-shell">
+    <h1>{{ '发布新房源' if mode == 'new' else '编辑房源' }}</h1>
+
+    <form method="post" enctype="multipart/form-data" autocomplete="off">
+
+        <!-- ============== Step 1: 基本信息 ============== -->
+        <div class="form-card">
+            <h2><span class="step">1</span> 基本信息</h2>
+
+            <div class="field">
+                <label for="title">房源标题 <span style="color:var(--danger);">*</span></label>
+                <input id="title" name="title" type="text" required
+                       value="{{ house.title if house else '' }}"
+                       placeholder="例如：坑口东港城上盖 五房合租 小巴15分钟直达科大">
+                {% if errors.title %}<div class="field-error">{{ errors.title }}</div>{% endif %}
+                <div class="hint">建议格式：地段 + 卖点 + 房型，标题越具体越容易获得咨询</div>
+            </div>
+
+            <!-- Price slider -->
+            <div class="field">
+                <label>月租金 <span style="color:var(--danger);">*</span></label>
+                <div class="slider-row">
+                    <div>
+                        HK$ <span class="slider-value" id="price-readout">{{ house.price_hkd if house and house.price_hkd else 8000 }}</span>
+                        <span class="slider-suffix">/ 月</span>
+                    </div>
+                </div>
+                <input type="range" class="slider"
+                       name="price_hkd"
+                       id="price-slider"
+                       min="2000" max="60000" step="500"
+                       value="{{ house.price_hkd if house and house.price_hkd else 8000 }}"
+                       data-output="price-readout">
+                <div class="slider-ticks">
+                    <span>2,000</span><span>15,000</span><span>30,000</span><span>45,000</span><span>60,000</span>
+                </div>
+                {% if errors.price_hkd %}<div class="field-error">{{ errors.price_hkd }}</div>{% endif %}
+            </div>
+
+            <!-- Region segmented -->
+            <div class="field">
+                <label>区域 <span style="color:var(--danger);">*</span></label>
+                <div class="segmented">
+                    {% for r in choices.regions %}
+                    <input type="radio" name="region" id="region-{{ loop.index }}"
+                           value="{{ r }}"
+                           {% if (house and house.region == r) or (not house and loop.first) %}checked{% endif %}>
+                    <label for="region-{{ loop.index }}">{{ r }}</label>
+                    {% endfor %}
+                </div>
+                {% if errors.region %}<div class="field-error">{{ errors.region }}</div>{% endif %}
+            </div>
+
+            <!-- District (cascading) -->
+            <div class="field">
+                <label for="district-select">所在地区 <span style="color:var(--danger);">*</span></label>
+                <select id="district-select" name="district"
+                        data-options='{{ choices.districts_by_region|tojson }}'>
+                    {# Initial options rendered for the currently selected region — JS will refresh on change #}
+                    {% set current_region = house.region if house and house.region else choices.regions[0] %}
+                    {% for d in choices.districts_by_region.get(current_region, []) %}
+                    <option value="{{ d }}" {% if house and house.district == d %}selected{% endif %}>{{ d }}</option>
+                    {% endfor %}
+                </select>
+                {% if errors.district %}<div class="field-error">{{ errors.district }}</div>{% endif %}
+            </div>
+
+            <div class="field">
+                <label for="address_detail">屋苑 / 楼宇（可选）</label>
+                <input id="address_detail" name="address_detail" type="text"
+                       value="{{ house.address_detail if house else '' }}"
+                       placeholder="例如：东港城上盖 / 名城 Festival City">
+            </div>
+
+            <div class="field">
+                <label>房型 <span style="color:var(--danger);">*</span></label>
+                <div class="segmented">
+                    {% for t in choices.room_types %}
+                    <input type="radio" name="room_type" id="room-{{ loop.index }}" value="{{ t }}"
+                           {% if (house and house.room_type == t) or (not house and loop.first) %}checked{% endif %}>
+                    <label for="room-{{ loop.index }}">{{ t }}</label>
+                    {% endfor %}
+                </div>
+                {% if errors.room_type %}<div class="field-error">{{ errors.room_type }}</div>{% endif %}
+            </div>
+
+            <div class="field">
+                <label for="area_sqft">实用面积（呎，可选）</label>
+                <input id="area_sqft" name="area_sqft" type="number" min="50" max="3000"
+                       value="{{ house.area_sqft if house and house.area_sqft else '' }}"
+                       placeholder="例如：480">
+            </div>
+        </div>
+
+        <!-- ============== Step 2: 交通 & 大学 ============== -->
+        <div class="form-card">
+            <h2><span class="step">2</span> 交通 &amp; 附近大学</h2>
+
+            <div class="form-grid">
+                <div class="field">
+                    <label for="mtr_station">最近港铁站</label>
+                    <input id="mtr_station" name="mtr_station" type="text"
+                           value="{{ house.mtr_station if house else '' }}"
+                           placeholder="例如：坑口 / 坚尼地城 / 大围">
+                </div>
+
+                <div class="field">
+                    <label for="near_university">附近大学</label>
+                    <select id="near_university" name="near_university">
+                        {% for u in choices.universities %}
+                        <option value="{{ u }}"
+                            {% if house and house.near_university == u %}selected{% elif not house and u == '无' %}selected{% endif %}>
+                            {{ u }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="field">
+                <label for="transport_info">交通信息（自由文字）</label>
+                <textarea id="transport_info" name="transport_info" rows="2"
+                          placeholder="例如：港铁坑口站 A 出口 3 分钟；小巴 15 分钟直达科大；早 8-10 点专车送学">{{ house.transport_info if house else '' }}</textarea>
+                <div class="hint">这段会显示在房源详情页，越具体越好（步行分钟数 / 校巴时间 / 转乘等）</div>
+            </div>
+        </div>
+
+        <!-- ============== Step 3: 租约 & 费用 ============== -->
+        <div class="form-card">
+            <h2><span class="step">3</span> 租约 &amp; 费用</h2>
+
+            <div class="form-grid">
+                <div class="field">
+                    <label>押金（月数）</label>
+                    <div class="stepper">
+                        <button type="button" data-step="-1">−</button>
+                        <input name="deposit_months" type="number" min="1" max="6"
+                               value="{{ house.deposit_months if house and house.deposit_months else 2 }}">
+                        <button type="button" data-step="+1">+</button>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>最短租期（月）</label>
+                    <div class="stepper">
+                        <button type="button" data-step="-1">−</button>
+                        <input name="min_lease_months" type="number" min="1" max="36"
+                               value="{{ house.min_lease_months if house and house.min_lease_months else 12 }}">
+                        <button type="button" data-step="+1">+</button>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>中介费</label>
+                    <div class="segmented">
+                        {% for fee in choices.agency_fees %}
+                        <input type="radio" name="agency_fee" id="fee-{{ loop.index }}" value="{{ fee }}"
+                               {% if (house and house.agency_fee == fee) or (not house and loop.first) %}checked{% endif %}>
+                        <label for="fee-{{ loop.index }}">{{ fee }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>包水电网煤</label>
+                    <div class="toggle-row">
+                        <label class="toggle">
+                            <input type="checkbox" name="bills_included"
+                                   {% if house and house.bills_included %}checked{% endif %}>
+                            <span class="slider-bg"></span>
+                        </label>
+                        <span style="font-size: 13px; color: var(--text-mid);">开启表示一价全包（水/电/煤气/网络）</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============== Step 4: 房源介绍 ============== -->
+        <div class="form-card">
+            <h2><span class="step">4</span> 房源详细介绍</h2>
+
+            <div class="field">
+                <label for="description">详细介绍 <span style="color:var(--danger);">*</span></label>
+                <textarea id="description" name="description" rows="10" required
+                          placeholder="可以用 emoji 分段，介绍房型、家电、生活配套、卖点等。例如：&#10;🛍️ 楼下即商场 / 超市&#10;🍳 大厨房 + 全屋家电&#10;💰 月租已包水电网煤">{{ house.description if house else '' }}</textarea>
+                {% if errors.description %}<div class="field-error">{{ errors.description }}</div>{% endif %}
+            </div>
+        </div>
+
+        <!-- ============== Step 5: 标签 ============== -->
+        <div class="form-card">
+            <h2><span class="step">5</span> 房源标签（建议选 3-6 个）</h2>
+            <div class="tag-chips">
+                {% for tag in choices.common_tags %}
+                <input type="checkbox" id="tag-{{ loop.index }}" name="tags" value="{{ tag }}"
+                       {% if tag in selected_tags %}checked{% endif %}>
+                <label for="tag-{{ loop.index }}">{{ tag }}</label>
+                {% endfor %}
+            </div>
+            <div class="hint" style="margin-top:10px;">
+                标签会以彩色芯片形式显示在房源卡片上，吸引精准客户。
+            </div>
+        </div>
+
+        <!-- ============== Step 6: 联系方式 ============== -->
+        <div class="form-card">
+            <h2><span class="step">6</span> 房东联系方式</h2>
+
+            <div class="form-grid">
+                <div class="field">
+                    <label for="contact_wechat">微信号</label>
+                    <input id="contact_wechat" name="contact_wechat" type="text"
+                           value="{{ house.contact_wechat if house else '' }}"
+                           placeholder="例如：Jason1201703">
+                </div>
+
+                <div class="field">
+                    <label for="contact_whatsapp">WhatsApp 号码（含 +852）</label>
+                    <input id="contact_whatsapp" name="contact_whatsapp" type="text"
+                           value="{{ house.contact_whatsapp if house else '' }}"
+                           placeholder="例如：+852 6463 2608">
+                </div>
+            </div>
+            {% if errors.contact %}<div class="field-error">{{ errors.contact }}</div>{% endif %}
+            <div class="hint">两者至少填一个。客户点详情页时可以直接复制微信号或跳转 WhatsApp。</div>
+        </div>
+
+        <!-- ============== Step 7: 图片 ============== -->
+        <div class="form-card">
+            <h2><span class="step">7</span> 房源图片（第一张会作为封面）</h2>
+
+            <div id="uploader" class="uploader" data-upload-url="{{ url_for('admin.upload') }}">
+                <div class="upload-icon">📷</div>
+                <div style="font-weight: 600;">点击或拖入图片到此区域上传</div>
+                <div class="upload-hint">支持 JPG / PNG / WebP · 单文件最大 16MB · 可上传多张</div>
+                <input id="file-input" type="file" accept="image/*" multiple>
+            </div>
+
+            <div id="previews" class="previews">
+                {% for img in existing_images %}
+                <div class="preview-tile" data-existing-url="{{ img.url }}"></div>
+                {% endfor %}
+            </div>
+
+            <div id="hidden-image-inputs"></div>
+        </div>
+
+        <!-- ============== Step 8: 状态 (only when editing) ============== -->
+        {% if mode == 'edit' %}
+        <div class="form-card">
+            <h2><span class="step">8</span> 上架状态</h2>
+            <div class="segmented">
+                {% for s in choices.statuses %}
+                <input type="radio" name="status" id="status-{{ loop.index }}" value="{{ s }}"
+                       {% if house and house.status == s %}checked{% elif not house and loop.first %}checked{% endif %}>
+                <label for="status-{{ loop.index }}">{{ s }}</label>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <input type="hidden" name="status" value="在租">
+        {% endif %}
+
+        <div class="form-footer">
+            <div class="left">
+                {% if mode == 'edit' %}
+                房源 ID #{{ house.id }} · 最后更新 {{ house.updated_at[:10] if house.updated_at else '—' }}
+                {% else %}
+                所有带 * 字段为必填项
+                {% endif %}
+            </div>
+            <div class="actions">
+                <a class="btn btn-ghost" href="{{ url_for('admin.dashboard') }}">取消</a>
+                <button class="btn btn-primary" type="submit">
+                    {{ '发布房源' if mode == 'new' else '保存修改' }}
+                </button>
+            </div>
+        </div>
+
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}" defer></script>
+{% endblock %}

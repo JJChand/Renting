@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}港漂安家 · 香港长租房源{% endblock %}</title>
+    <meta name="description" content="{% block description %}港漂安家 — 专为内地学生与新移民打造的香港长租平台。免中介费、房东直租、近港铁、近大学。{% endblock %}">
+    {% block head_extra %}{% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/public.css') }}">
+</head>
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <a href="{{ url_for('public.index') }}" class="logo">港漂安家</a>
+        <nav class="nav">
+            <a href="{{ url_for('public.index') }}" {% if request.endpoint == 'public.index' %}class="active"{% endif %}>首页</a>
+            <a href="{{ url_for('public.index') }}#listings">浏览房源</a>
+            <a href="{{ url_for('public.index') }}?university=HKU">大学专区</a>
+            <a href="#footer">联系我们</a>
+            <button class="nav-mobile-toggle" aria-label="菜单">☰</button>
+        </nav>
+    </div>
+</header>
+
+{% block content %}{% endblock %}
+
+<footer class="footer" id="footer">
+    <div class="footer-inner">
+        <div class="footer-col">
+            <h4>港漂安家</h4>
+            <p>专为内地学生和港漂新移民打造的香港长租平台。所有房源均经房东核实，免中介费、近港铁、近大学。</p>
+            <p>📧 hello@gangpiao-anjia.com</p>
+            <p>📱 微信 / WhatsApp：+852 5000 0000</p>
+        </div>
+        <div class="footer-col">
+            <h4>探索</h4>
+            <ul>
+                <li><a href="{{ url_for('public.index') }}">浏览全部房源</a></li>
+                <li><a href="{{ url_for('public.index') }}?university=HKU">港大附近</a></li>
+                <li><a href="{{ url_for('public.index') }}?university=CUHK">中大附近</a></li>
+                <li><a href="{{ url_for('public.index') }}?university=HKUST">科大附近</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>租房指南</h4>
+            <ul>
+                <li><a href="#">看房注意事项</a></li>
+                <li><a href="#">合同样本</a></li>
+                <li><a href="#">押金常识</a></li>
+                <li><a href="#">港铁路线图</a></li>
+            </ul>
+        </div>
+        <div class="footer-col">
+            <h4>帮助</h4>
+            <ul>
+                <li><a href="#">常见问题</a></li>
+                <li><a href="#">服务条款</a></li>
+                <li><a href="#">隐私政策</a></li>
+                <li><a href="#">举报房源</a></li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        © 2026 港漂安家 · 在香港用心打造 🇭🇰
+    </div>
+</footer>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

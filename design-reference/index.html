@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HK Expats Rent — Long-term Rentals for Mainland Expats & Students</title>
+    <style>
+        /* ============ Reset & Base ============ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1890ff;
+            --primary-dark: #096dd9;
+            --primary-light: #e6f7ff;
+            --accent: #ff7a45;
+            --text-dark: #1f1f1f;
+            --text-mid: #595959;
+            --text-light: #8c8c8c;
+            --border: #e8e8e8;
+            --bg: #f5f7fa;
+            --white: #ffffff;
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 12px 32px rgba(24, 144, 255, 0.18);
+            --radius: 12px;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                "Hiragino Sans GB", "Microsoft YaHei", Roboto, sans-serif;
+            color: var(--text-dark);
+            background-color: var(--bg);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        img {
+            display: block;
+            max-width: 100%;
+        }
+
+        button {
+            font-family: inherit;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        /* ============ Header ============ */
+        .header {
+            background-color: var(--white);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.3px;
+        }
+
+        .logo::before {
+            content: "🏙";
+            font-size: 26px;
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav a {
+            padding: 8px 16px;
+            font-size: 15px;
+            color: var(--text-mid);
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .nav a:hover {
+            color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .nav a.active {
+            color: var(--primary);
+        }
+
+        .btn-post {
+            background-color: var(--primary);
+            color: var(--white) !important;
+            padding: 9px 20px !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            box-shadow: 0 2px 6px rgba(24, 144, 255, 0.3);
+            transition: all 0.25s ease;
+        }
+
+        .btn-post:hover {
+            background-color: var(--primary-dark) !important;
+            color: var(--white) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+        }
+
+        .nav-mobile-toggle {
+            display: none;
+            font-size: 24px;
+            background: none;
+            color: var(--text-dark);
+        }
+
+        /* ============ Hero / Search Section ============ */
+        .hero {
+            background: linear-gradient(135deg, #1890ff 0%, #36cfc9 100%);
+            padding: 64px 24px 96px;
+            color: var(--white);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: -40%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            bottom: -50%;
+            left: -10%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 50%;
+        }
+
+        .hero-content {
+            max-width: 880px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 38px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 17px;
+            opacity: 0.92;
+            margin-bottom: 32px;
+        }
+
+        .search-bar {
+            display: flex;
+            background-color: var(--white);
+            border-radius: 14px;
+            padding: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .search-bar input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 14px 18px;
+            font-size: 16px;
+            color: var(--text-dark);
+            background: transparent;
+            font-family: inherit;
+        }
+
+        .search-bar input::placeholder {
+            color: var(--text-light);
+        }
+
+        .search-btn {
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 0 32px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .search-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* ============ Filter Section ============ */
+        .filters-wrap {
+            max-width: 1280px;
+            margin: -48px auto 0;
+            padding: 0 24px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .filters {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-md);
+            padding: 20px 24px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 160px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            color: var(--text-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-group select {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-dark);
+            background-color: var(--white);
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3e%3cpath fill='%23595959' d='M6 8L0 0h12z'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+        }
+
+        .filter-group select:hover,
+        .filter-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.12);
+        }
+
+        .filter-reset {
+            color: var(--primary);
+            background: none;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+            align-self: flex-end;
+        }
+
+        .filter-reset:hover {
+            background-color: var(--primary-light);
+        }
+
+        /* ============ Ticker (Marquee) ============ */
+        .ticker {
+            max-width: 1280px;
+            margin: 32px auto 0;
+            padding: 0 24px;
+        }
+
+        .ticker-bar {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(90deg, #e6f7ff 0%, #f0f9ff 50%, #e6fffb 100%);
+            border: 1px solid #bae7ff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(24, 144, 255, 0.06);
+        }
+
+        .ticker-label {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background-color: var(--primary);
+            color: var(--white);
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .ticker-label::before {
+            content: "📢";
+            font-size: 14px;
+        }
+
+        .ticker-viewport {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            /* Soft fade on both edges for a polished look */
+            -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
+        }
+
+        .ticker-track {
+            display: flex;
+            width: max-content;
+            /* Duplicating the items lets us translate by -50% for a seamless loop */
+            animation: ticker-scroll 36s linear infinite;
+        }
+
+        .ticker-viewport:hover .ticker-track {
+            animation-play-state: paused;
+        }
+
+        .ticker-item {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 28px;
+            font-size: 14px;
+            color: var(--text-dark);
+            white-space: nowrap;
+            border-right: 1px dashed rgba(24, 144, 255, 0.25);
+        }
+
+        .ticker-item strong {
+            color: var(--primary);
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        .ticker-item .price {
+            color: var(--accent);
+            font-weight: 700;
+            margin-left: 4px;
+        }
+
+        @keyframes ticker-scroll {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                /* -50% because we render the item list twice; one full cycle = one copy */
+                transform: translateX(-50%);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .ticker-label {
+                padding: 10px 12px;
+                font-size: 12px;
+            }
+
+            .ticker-item {
+                padding: 10px 18px;
+                font-size: 13px;
+            }
+
+            .ticker-track {
+                /* Speed up slightly on mobile so users see more pass by */
+                animation-duration: 28s;
+            }
+        }
+
+        /* ============ Listing Section ============ */
+        .listings {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 48px 24px 64px;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .section-head h2 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .section-head h2 small {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--text-light);
+            margin-left: 8px;
+        }
+
+        .sort {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .sort button {
+            padding: 7px 14px;
+            font-size: 13px;
+            background: var(--white);
+            color: var(--text-mid);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sort button:hover {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .sort button.is-active {
+            background: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        /* CSS Grid for property cards: 3-4 per row desktop, 1 mobile */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+        }
+
+        @media (max-width: 1180px) {
+            .grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 880px) {
+            .grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ============ Property Card ============ */
+        .card {
+            background-color: var(--white);
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-image {
+            position: relative;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            background-color: #f0f0f0;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .card:hover .card-image img {
+            transform: scale(1.06);
+        }
+
+        .badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background-color: var(--accent);
+            color: var(--white);
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .heart {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            background-color: rgba(255, 255, 255, 0.92);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--text-mid);
+            transition: all 0.2s ease;
+        }
+
+        .heart:hover {
+            color: #ff4d4f;
+            transform: scale(1.1);
+        }
+
+        .card-body {
+            padding: 16px 18px 18px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .card-price {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
+        }
+
+        .card-price small {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-light);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-meta {
+            font-size: 13px;
+            color: var(--text-mid);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .card-meta::before {
+            content: "📍";
+            font-size: 13px;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: auto;
+        }
+
+        .tag {
+            font-size: 12px;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-weight: 500;
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .tag.tag-green {
+            background-color: #f6ffed;
+            color: #389e0d;
+        }
+
+        .tag.tag-orange {
+            background-color: #fff7e6;
+            color: #d46b08;
+        }
+
+        .tag.tag-purple {
+            background-color: #f9f0ff;
+            color: #722ed1;
+        }
+
+        /* ============ Footer ============ */
+        .footer {
+            background-color: #001529;
+            color: rgba(255, 255, 255, 0.65);
+            padding: 48px 24px 24px;
+            margin-top: 32px;
+        }
+
+        .footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 32px;
+        }
+
+        .footer-col h4 {
+            color: var(--white);
+            font-size: 15px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .footer-col p {
+            font-size: 13px;
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .footer-col ul li a {
+            transition: color 0.2s ease;
+        }
+
+        .footer-col ul li a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        @media (max-width: 880px) {
+            .footer-inner {
+                grid-template-columns: 1fr 1fr;
+                gap: 28px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .footer-inner {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ============ Responsive Header ============ */
+        @media (max-width: 768px) {
+            .hero {
+                padding: 48px 20px 80px;
+            }
+
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .hero p {
+                font-size: 15px;
+            }
+
+            .search-bar {
+                flex-direction: column;
+                padding: 12px;
+                gap: 8px;
+            }
+
+            .search-bar input {
+                padding: 12px 14px;
+            }
+
+            .search-btn {
+                padding: 14px;
+                justify-content: center;
+                width: 100%;
+            }
+
+            .nav {
+                gap: 4px;
+            }
+
+            .nav a:not(.btn-post) {
+                display: none;
+            }
+
+            .nav-mobile-toggle {
+                display: block;
+            }
+
+            .section-head h2 {
+                font-size: 22px;
+            }
+
+            .filters {
+                padding: 16px;
+            }
+
+            .filter-group {
+                flex: 1 1 calc(50% - 8px);
+                min-width: 0;
+            }
+
+            .filter-reset {
+                flex: 1 1 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============ Header Navigation ============ -->
+    <header class="header">
+        <div class="header-inner">
+            <a href="#" class="logo">HK Expats Rent</a>
+            <nav class="nav">
+                <a href="#" class="active">Home</a>
+                <a href="#">Map Search</a>
+                <a href="#">Universities</a>
+                <a href="#">Guides</a>
+                <a href="#" class="btn-post">+ Post Property</a>
+                <a href="#">Login / Register</a>
+                <button class="nav-mobile-toggle" aria-label="Menu">☰</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ============ Hero & Search Section ============ -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Find Your Home in Hong Kong</h1>
+            <p>Verified long-term rentals for mainland expats, exchange students &amp; young professionals — no agency fees, English &amp; 简体中文 support.</p>
+            <form class="search-bar" onsubmit="event.preventDefault()">
+                <input type="text" placeholder="Search districts, MTR stations, estates, or universities..." aria-label="Search">
+                <button type="submit" class="search-btn">🔍 Search</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- ============ Filter Bar ============ -->
+    <div class="filters-wrap">
+        <div class="filters">
+            <div class="filter-group">
+                <label for="f-region">Region</label>
+                <select id="f-region">
+                    <option>All Regions</option>
+                    <option>Hong Kong Island</option>
+                    <option>Kowloon</option>
+                    <option>New Territories</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="f-rent">Rent Range</label>
+                <select id="f-rent">
+                    <option>Any Price</option>
+                    <option>Below HK$ 6,000</option>
+                    <option>HK$ 6,000 – 10,000</option>
+                    <option>HK$ 10,000 – 15,000</option>
+                    <option>HK$ 15,000 – 25,000</option>
+                    <option>Above HK$ 25,000</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="f-room">Room Type</label>
+                <select id="f-room">
+                    <option>Any Type</option>
+                    <option>Single Room (单间)</option>
+                    <option>Studio Flat (开放式)</option>
+                    <option>1-Bedroom</option>
+                    <option>2-Bedroom</option>
+                    <option>3-Bedroom &amp; Above</option>
+                    <option>Co-Living / Shared</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="f-near">Near</label>
+                <select id="f-near">
+                    <option>Anywhere</option>
+                    <option>HKU (香港大学)</option>
+                    <option>CUHK (中文大学)</option>
+                    <option>HKUST (科技大学)</option>
+                    <option>PolyU (理工大学)</option>
+                    <option>CityU (城市大学)</option>
+                </select>
+            </div>
+            <button class="filter-reset" type="button">Reset</button>
+        </div>
+    </div>
+
+    <!-- ============ Live Updates Ticker ============ -->
+    <div class="ticker" aria-label="Latest property updates">
+        <div class="ticker-bar">
+            <div class="ticker-label">最新动态 LIVE</div>
+            <div class="ticker-viewport">
+                <!--
+                    Items are rendered TWICE inside .ticker-track.
+                    The @keyframes translates the track by -50%, so when the first copy
+                    has finished scrolling off-screen, the second copy is perfectly aligned
+                    where copy #1 began — creating a seamless infinite loop with no jump.
+                -->
+                <div class="ticker-track">
+                    <!-- ===== Copy 1 ===== -->
+                    <span class="ticker-item">🔥 最新上架：红磡海韵轩单间，<span class="price">HK$ 5,500/月</span></span>
+                    <span class="ticker-item">⚡ 刚刚租出：大围名城两室一厅，<strong>3天速租</strong></span>
+                    <span class="ticker-item">🏡 降价急租：港大西宝城旁独立卫浴，<span class="price">HK$ 7,800/月</span></span>
+                    <span class="ticker-item">🎓 学生专享：中大新亚书院附近合租，<span class="price">HK$ 4,200/月起</span></span>
+                    <span class="ticker-item">✨ 全新装修：日出康城首都海景两房，<span class="price">HK$ 14,500/月</span></span>
+                    <span class="ticker-item">🚇 港铁直达：坚尼地城地铁A出口3分钟，<strong>步行至HKU</strong></span>
+                    <span class="ticker-item">💎 业主直租：油麻地开放式studio，<strong>免中介费</strong></span>
+                    <span class="ticker-item">🌊 海景房源：将军澳日出康城，<span class="price">HK$ 12,000/月</span></span>
+                    <span class="ticker-item">🎁 限时优惠：旺角朗豪坊旁全新studio首月半价</span>
+                    <span class="ticker-item">📚 科大快线：坑口港铁站套房，<strong>校巴15分钟直达HKUST</strong></span>
+
+                    <!-- ===== Copy 2 (identical, required for seamless loop) ===== -->
+                    <span class="ticker-item">🔥 最新上架：红磡海韵轩单间，<span class="price">HK$ 5,500/月</span></span>
+                    <span class="ticker-item">⚡ 刚刚租出：大围名城两室一厅，<strong>3天速租</strong></span>
+                    <span class="ticker-item">🏡 降价急租：港大西宝城旁独立卫浴，<span class="price">HK$ 7,800/月</span></span>
+                    <span class="ticker-item">🎓 学生专享：中大新亚书院附近合租，<span class="price">HK$ 4,200/月起</span></span>
+                    <span class="ticker-item">✨ 全新装修：日出康城首都海景两房，<span class="price">HK$ 14,500/月</span></span>
+                    <span class="ticker-item">🚇 港铁直达：坚尼地城地铁A出口3分钟，<strong>步行至HKU</strong></span>
+                    <span class="ticker-item">💎 业主直租：油麻地开放式studio，<strong>免中介费</strong></span>
+                    <span class="ticker-item">🌊 海景房源：将军澳日出康城，<span class="price">HK$ 12,000/月</span></span>
+                    <span class="ticker-item">🎁 限时优惠：旺角朗豪坊旁全新studio首月半价</span>
+                    <span class="ticker-item">📚 科大快线：坑口港铁站套房，<strong>校巴15分钟直达HKUST</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ Property Listings ============ -->
+    <main class="listings">
+        <div class="section-head">
+            <h2>Featured Rentals <small>3,248 verified listings updated today</small></h2>
+            <div class="sort">
+                <button class="is-active">Recommended</button>
+                <button>Price ↑</button>
+                <button>Newest</button>
+                <button>Near MTR</button>
+            </div>
+        </div>
+
+        <section class="grid" aria-label="Property listings">
+
+            <!-- Card 1 -->
+            <article class="card">
+                <div class="card-image">
+                    <span class="badge">HOT</span>
+                    <span class="heart">♡</span>
+                    <img src="https://picsum.photos/400/300?random=1" alt="Kennedy Town apartment">
+                </div>
+                <div class="card-body">
+                    <div class="card-price">HK$ 6,500 <small>/ month</small></div>
+                    <h3 class="card-title">Kennedy Town, 5-min walk to HKU, Bright Single Room</h3>
+                    <div class="card-meta">Kennedy Town MTR · Exit B · HK Island</div>
+                    <div class="card-tags">
+                        <span class="tag tag-green">No Agency Fee</span>
+                        <span class="tag">Near MTR</span>
+                        <span class="tag tag-orange">HKU 5min</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 2 -->
+            <article class="card">
+                <div class="card-image">
+                    <span class="badge">NEW</span>
+                    <span class="heart">♡</span>
+                    <img src="https://picsum.photos/400/300?random=2" alt="Tai Wai studio">
+                </div>
+                <div class="card-body">
+                    <div class="card-price">HK$ 9,800 <small>/ month</small></div>
+                    <h3 class="card-title">Tai Wai Festival City, Cozy Studio Flat with Skyline View</h3>
+                    <div class="card-meta">Tai Wai MTR · 3 min · 2 stops to CUHK</div>
+                    <div class="card-tags">
+                        <span class="tag">Near MTR</span>
+                        <span class="tag tag-purple">Furnished</span>
+                        <span class="tag tag-orange">CUHK Line</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 3 -->
+            <article class="card">
+                <div class="card-image">
+                    <span class="heart">♡</span>
+                    <img src="https://picsum.photos/400/300?random=3" alt="LOHAS Park sea view">
+                </div>
+                <div class="card-body">
+                    <div class="card-price">HK$ 14,500 <small>/ month</small></div>
+                    <h3 class="card-title">LOHAS Park, Sea-View 2-Bedroom with Clubhouse Access</h3>
+                    <div class="card-meta">LOHAS Park MTR · Exit C · Tseung Kwan O</div>
+                    <div class="card-tags">
+                        <span class="tag tag-green">No Agency Fee</span>
+                        <span class="tag tag-purple">Sea View</span>
+                        <span class="tag">Clubhouse</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 4 -->
+            <article class="card">
+                <div class="card-image">
+                    <span class="badge">HOT</span>
+                    <span class="heart">♡</span>
+                    <img src="https://picsum.photos/400/300?random=4" alt="Hung Hom apartment near PolyU">
+                </div>
+                <div class="card-body">
+                    <div class="card-price">HK$ 7,200 <small>/ month</small></div>
+                    <h3 class="card-title">Hung Hom Whampoa Garden, En-suite Room, 8 min to PolyU</h3>
+                    <div class="card-meta">Whampoa MTR · Kowloon · PolyU 8 min</div>
+                    <div class="card-tags">
+                        <span class="tag tag-green">En-suite</span>
+                        <span class="tag tag-orange">PolyU Nearby</span>
+                        <span class="tag">All Bills Inc.</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 5 -->
+            <article class="card">
+                <div class="card-image">
+                    <span class="heart">♡</span>
+                    <img src="https://picsum.photos/400/300?random=5" alt="Sha Tin near CUHK">
+                </div>
+                <div class="card-body">
+                    <div class="card-price">HK$ 5,800 <small>/ month</small></div>
+                    <h3 class="card-title">Sha Tin, Shared Apartment, 1 MTR Stop to CUHK Campus</h3>
+                    <div class="card-meta">Sha Tin MTR · East Rail Line · NT</div>
+                    <div class="card-tags">
+                        <span class="tag tag-green">No Agency Fee</span>
+                        <span class="tag tag-purple">Co-Living</span>
+                        <span class="tag">Student-Friendly</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 6 -->
+            <article class="card">
+                <div class="card-image">
+                    <span class="badge">PREMIUM</span>
+                    <span class="heart">♡</span>
+                    <img src="https://picsum.photos/400/300?random=6" alt="Mid-Levels luxury">
+                </div>
+                <div class="card-body">
+                    <div class="card-price">HK$ 22,000 <small>/ month</small></div>
+                    <h3 class="card-title">Mid-Levels Central, Modern 1-Bedroom near Escalator</h3>
+                    <div class="card-meta">Central MTR · 10 min walk · HK Island</div>
+                    <div class="card-tags">
+                        <span class="tag tag-purple">City Center</span>
+                        <span class="tag">Fully Furnished</span>
+                        <span class="tag tag-orange">Gym &amp; Pool</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 7 -->
+            <article class="card">
+                <div class="card-image">
+                    <span class="badge">NEW</span>
+                    <span class="heart">♡</span>
+                    <img src="https://picsum.photos/400/300?random=7" alt="Hang Hau HKUST">
+                </div>
+                <div class="card-body">
+                    <div class="card-price">HK$ 8,400 <small>/ month</small></div>
+                    <h3 class="card-title">Hang Hau, En-suite Master Room, 15 min Shuttle to HKUST</h3>
+                    <div class="card-meta">Hang Hau MTR · TKO Line · Kowloon</div>
+                    <div class="card-tags">
+                        <span class="tag tag-green">En-suite</span>
+                        <span class="tag tag-orange">HKUST Shuttle</span>
+                        <span class="tag">WiFi Inc.</span>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Card 8 -->
+            <article class="card">
+                <div class="card-image">
+                    <span class="heart">♡</span>
+                    <img src="https://picsum.photos/400/300?random=8" alt="Mong Kok studio">
+                </div>
+                <div class="card-body">
+                    <div class="card-price">HK$ 11,500 <small>/ month</small></div>
+                    <h3 class="card-title">Mong Kok, Brand-New Studio Steps from Langham Place</h3>
+                    <div class="card-meta">Mong Kok MTR · Exit E2 · Kowloon</div>
+                    <div class="card-tags">
+                        <span class="tag tag-green">No Agency Fee</span>
+                        <span class="tag tag-purple">Brand New</span>
+                        <span class="tag">CityU 4 stops</span>
+                    </div>
+                </div>
+            </article>
+
+        </section>
+    </main>
+
+    <!-- ============ Footer ============ -->
+    <footer class="footer">
+        <div class="footer-inner">
+            <div class="footer-col">
+                <h4>HK Expats Rent</h4>
+                <p>The trusted long-term rental platform built for mainland expats, exchange students, and young professionals settling in Hong Kong. All listings are agent-verified.</p>
+                <p>📧 hello@hkexpatsrent.com</p>
+                <p>📱 WeChat / WhatsApp: +852 5000 0000</p>
+            </div>
+            <div class="footer-col">
+                <h4>Explore</h4>
+                <ul>
+                    <li><a href="#">Map Search</a></li>
+                    <li><a href="#">Near Universities</a></li>
+                    <li><a href="#">Co-Living Spaces</a></li>
+                    <li><a href="#">Short-Term Stays</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>For Landlords</h4>
+                <ul>
+                    <li><a href="#">Post a Property</a></li>
+                    <li><a href="#">Pricing Plans</a></li>
+                    <li><a href="#">Landlord Guide</a></li>
+                    <li><a href="#">Verification</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Rental Contracts</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            © 2026 HK Expats Rent · Licensed Property Agent No. C-000000 · Made in Hong Kong 🇭🇰
+        </div>
+    </footer>
+
+</body>
+</html>
